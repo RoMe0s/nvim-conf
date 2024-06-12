@@ -47,9 +47,6 @@ return require('packer').startup(function(use)
   -- Theme
   use { 'catppuccin/nvim', as = 'catppuccin' }
 
-  -- Words highlight
-  use 'RRethy/vim-illuminate'
-
   -- Surround
   use({
     "kylechui/nvim-surround",

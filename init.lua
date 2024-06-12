@@ -112,6 +112,9 @@ map('n', '<A-j>', '<Cmd>BufferPrevious<CR>', opts)
 map('n', '<A-l>', '<Cmd>BufferNext<CR>', opts)
 -- Close buffer
 map('n', '<A-q>', '<Cmd>BufferClose<CR>', opts)
+-- Reorder tabs
+map('n', '<A-,>', '<Cmd>BufferMovePrevious<CR>', opts)
+map('n', '<A-.>', '<Cmd>BufferMoveNext<CR>', opts)
 
 -- File tree
 require('nvim-tree').setup {
@@ -146,7 +149,8 @@ require('nvim-surround').setup()
 
 -- Theme
 vim.opt.termguicolors = true
-vim.cmd 'colorscheme shine'
+-- vim.cmd 'colorscheme shine'
+vim.cmd 'colorscheme morning'
 
 -- use system clipboard
 vim.opt.clipboard = 'unnamedplus'
