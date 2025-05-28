@@ -9,7 +9,7 @@ return require('packer').startup(function(use)
   }
 
   -- Autocomplete
-  use 'neovim/nvim-lspconfig'
+  use 'neovim/nvim-lspconfig' 
   use 'nvim-treesitter/completion-treesitter' -- Only if you are using TS
   use 'hrsh7th/nvim-cmp' -- Autocompletion plugin
   use 'hrsh7th/cmp-nvim-lsp' -- LSP source for nvim-cmp
@@ -18,12 +18,13 @@ return require('packer').startup(function(use)
 
   -- Files search
   use {
-    'nvim-telescope/telescope.nvim', tag = '0.1.6',
+    'nvim-telescope/telescope.nvim', tag = '0.1.8',
     requires = { 'nvim-lua/plenary.nvim' }
   }
 
   -- copilot
   use 'github/copilot.vim'
+  use 'CopilotC-Nvim/CopilotChat.nvim'
 
   -- Tabs
   use 'nvim-tree/nvim-web-devicons'
@@ -45,16 +46,10 @@ return require('packer').startup(function(use)
   use 'numToStr/Comment.nvim'
 
   -- Theme
-  use { 'catppuccin/nvim', as = 'catppuccin' }
+  use 'zaldih/themery.nvim'
+  use 'liuchengxu/space-vim-theme'
+  use 'scottmckendry/cyberdream.nvim'
 
-  -- Surround
-  use({
-    "kylechui/nvim-surround",
-    tag = "*", -- Use for stability; omit to use `main` branch for the latest features
-    config = function()
-        require("nvim-surround").setup({
-            -- Configuration here, or leave empty to use defaults
-        })
-    end
-  })
+  -- Errors
+  use 'folke/trouble.nvim'
 end)

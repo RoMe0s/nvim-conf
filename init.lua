@@ -50,7 +50,8 @@ require('nvim-treesitter.configs').setup {
   },
 
   indent = {
-    enable = false
+    -- change this to false
+    enable = true
   }
 }
 
@@ -69,8 +70,26 @@ cmp.setup {
     -- documentation = cmp.config.window.bordered(),
   },
   mapping = cmp.mapping.preset.insert({
-    ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-    ['<C-f>'] = cmp.mapping.scroll_docs(4),
+    ["<Tab>"] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_next_item()
+      elseif luasnip.locally_jumpable(1) then
+        luasnip.jump(1)
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
+    ["<S-Tab>"] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_prev_item()
+      elseif luasnip.locally_jumpable(-1) then
+        luasnip.jump(-1)
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
+    -- ['<C-b>'] = cmp.mapping.scroll_docs(-4),
+    -- ['<C-f>'] = cmp.mapping.scroll_docs(4),
     ['<C-Space>'] = cmp.mapping.complete(),
     ['<C-e>'] = cmp.mapping.abort(),
     ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
@@ -102,6 +121,9 @@ local builtin = require('telescope.builtin')
 vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
 -- Search over files
 vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
+-- List buffers
+vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Telescope buffers' })
+
 
 -- Tab management
 local map = vim.api.nvim_set_keymap
@@ -127,7 +149,8 @@ vim.keymap.set('n', '<leader>fq', ':NvimTreeClose<CR>', { noremap = true, silent
 -- Statusline
 require('lualine').setup {
   options = {
-    theme = 'onelight'
+    -- theme = 'onelight'
+    theme = 'auto'
   }
 }
 
@@ -144,13 +167,84 @@ require('Comment').setup {
   }
 }
 
--- Surround
-require('nvim-surround').setup()
-
--- Theme
-vim.opt.termguicolors = true
--- vim.cmd 'colorscheme shine'
-vim.cmd 'colorscheme morning'
-
 -- use system clipboard
 vim.opt.clipboard = 'unnamedplus'
+
+-- Copilot
+vim.keymap.set('i', '<M-d>', '<Plug>(copilot-dismiss)')
+vim.keymap.set('i', '<M-a>', 'copilot#Accept("\\<CR>")', { expr = true, replace_keycodes = false })
+vim.g.copilot_no_tab_map = true
+
+vim.keymap.set('n', '<C-D>', ':Copilot disable<CR>', { noremap = true, silent = true })
+vim.keymap.set('n', '<C-E>', ':Copilot enable<CR>', { noremap = true, silent = true })
+vim.keymap.set('n', '<C-O>', ':CopilotChatToggle<CR>', { noremap = true, silent = true })
+
+require("CopilotChat").setup {
+  -- See Configuration section for options
+}
+
+-- Colorschemes preview
+require("themery").setup({
+  themes = {
+    "space_vim_theme",
+    "shine",
+    "murphy",
+    "onedark",
+  },
+  themes = {
+    {
+      name = "Space vim dark",
+      colorscheme = "space_vim_theme",
+      before = [[
+        vim.o.background = "dark"
+      ]],
+    },
+    {
+      name = "Space vim light",
+      colorscheme = "space_vim_theme",
+      before = [[
+        vim.o.background = "light"
+      ]],
+    },
+    {
+      name = "Cyberdream dark",
+      colorscheme = "cyberdream",
+      before = [[
+        vim.o.background = "dark"
+      ]],
+    },
+    {
+      name = "Murphy",
+      colorscheme = "murphy",
+      before = [[
+	vim.o.background = "dark"
+      ]],
+    },
+  },
+  liverPreview = true,
+})
+
+-- Errors
+require('trouble').setup {}
+-- Show	diagnostics in Trouble
+vim.keymap.set('n', '<leader>dd', '<Cmd>Trouble diagnostics toggle focus=false filter.buf=0<CR>', { noremap = true, silent = true })
+-- Show	symbols list in Trouble
+vim.keymap.set('n', '<leader>ds', '<Cmd>Trouble symbols toggle focus=true<CR>', { noremap = true, silent = true })
+
+-- Open Telescope results in Trouble
+local actions = require("telescope.actions")
+local open_with_trouble = require("trouble.sources.telescope").open
+
+-- Use this to add more results without clearing the trouble list
+local add_to_trouble = require("trouble.sources.telescope").add
+
+local telescope = require("telescope")
+
+telescope.setup({
+  defaults = {
+    mappings = {
+      i = { ["<c-t>"] = open_with_trouble },
+      n = { ["<c-t>"] = open_with_trouble },
+    },
+  },
+})
