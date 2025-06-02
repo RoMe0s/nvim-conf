@@ -193,17 +193,32 @@ require("themery").setup({
   },
   themes = {
     {
-      name = "Space vim dark",
-      colorscheme = "space_vim_theme",
-      before = [[
-        vim.o.background = "dark"
-      ]],
-    },
-    {
       name = "Space vim light",
       colorscheme = "space_vim_theme",
       before = [[
         vim.o.background = "light"
+      ]],
+    },
+    {
+      name = "Tokyonight light",
+      colorscheme = "tokyonight-day",
+      before = [[
+        vim.o.background = "light"
+      ]],
+    },
+    {
+      name = "Github light",
+      colorscheme = "github_light",
+      before = [[
+        vim.o.background = "light"
+      ]],
+    },
+    -- Dark themes
+    {
+      name = "Space vim dark",
+      colorscheme = "space_vim_theme",
+      before = [[
+        vim.o.background = "dark"
       ]],
     },
     {
@@ -220,12 +235,36 @@ require("themery").setup({
 	vim.o.background = "dark"
       ]],
     },
+    {
+      name = "Wildcharm",
+      colorscheme = "wildcharm",
+      before = [[
+	vim.o.background = "dark"
+      ]],
+    },
+    {
+      name = "Retrobox",
+      colorscheme = "retrobox",
+      before = [[
+	vim.o.background = "dark"
+      ]],
+    },
+    {
+      name = "Slate",
+      colorscheme = "slate",
+      before = [[
+	vim.o.background = "dark"
+      ]],
+    },
   },
   liverPreview = true,
 })
+vim.keymap.set('n', '<leader>tt', ':Themery<CR>', { noremap = true, silent = true })
 
 -- Errors
 require('trouble').setup {}
+-- Show	diagnostics
+vim.keymap.set('n', '<leader>de', '<Cmd>:lua vim.diagnostic.open_float(0, {scope="line"})<CR>', { noremap = true, silent = true })
 -- Show	diagnostics in Trouble
 vim.keymap.set('n', '<leader>dd', '<Cmd>Trouble diagnostics toggle focus=false filter.buf=0<CR>', { noremap = true, silent = true })
 -- Show	symbols list in Trouble
@@ -248,3 +287,24 @@ telescope.setup({
     },
   },
 })
+
+-- Inline errors (duplicated errors are possible after nvim launch)
+-- vim.diagnostic.config({
+--   virtual_text = {
+--     source = "if_many",
+--     prefix = '● ',
+--   },
+--   update_in_insert = true,
+--   underline = true,
+--   severity_sort = true,
+--   float = {
+--     focusable = false,
+--     style = 'minimal',
+--     border = 'rounded',
+--     source = 'if_many',
+--     header = '',
+--     prefix = '',
+--   },
+-- })
+-- vim.diagnostic.config({ virtual_lines = true })
+-- vim.diagnostic.config({ virtual_text = true })

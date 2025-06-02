@@ -49,6 +49,8 @@ return require('packer').startup(function(use)
   use 'zaldih/themery.nvim'
   use 'liuchengxu/space-vim-theme'
   use 'scottmckendry/cyberdream.nvim'
+  use 'folke/tokyonight.nvim'
+  use 'projekt0n/github-nvim-theme'
 
   -- Errors
   use 'folke/trouble.nvim'
