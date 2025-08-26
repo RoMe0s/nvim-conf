@@ -1,3 +1,18 @@
+-- Lua indent
+-- Disable Tree-sitter indent for Lua
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "lua",
+  callback = function()
+    vim.opt_local.shiftwidth = 2
+    vim.opt_local.tabstop = 2
+    vim.opt_local.expandtab = true
+    vim.b.disable_indentexpr = true  -- disables Tree-sitter indent
+  end,
+})
+
+-- Relative line numbers
+vim.opt.relativenumber = true
+
 -- =========================
 -- Basic Settings & Plugins
 -- =========================
@@ -30,15 +45,58 @@ vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Telescope buffers' 
 -- Tab management (Bufferline)
 local map = vim.api.nvim_set_keymap
 local opts = { noremap = true, silent = true }
-map('n', '<A-h>', '<Cmd>BufferPrevious<CR>', opts)
-map('n', '<A-l>', '<Cmd>BufferNext<CR>', opts)
-map('n', '<A-q>', '<Cmd>BufferClose<CR>', opts)
-map('n', '<A-,>', '<Cmd>BufferMovePrevious<CR>', opts)
-map('n', '<A-.>', '<Cmd>BufferMoveNext<CR>', opts)
+-- map('n', '<A-h>', '<Cmd>BufferPrevious<CR>', opts)
+-- map('n', '<A-l>', '<Cmd>BufferNext<CR>', opts)
+-- map('n', '<A-q>', '<Cmd>BufferClose<CR>', opts)
+-- map('n', '<A-,>', '<Cmd>BufferMovePrevious<CR>', opts)
+-- map('n', '<A-.>', '<Cmd>BufferMoveNext<CR>', opts)
+
+-- map('n', '<A-,>', '<Cmd>BufferMovePrevious<CR>', opts)
+-- map('n', '<A-.>', '<Cmd>BufferMoveNext<CR>', opts)
+
+-- Harpoon (file marking and quick navigation)
+local harpoon = require("harpoon")
+harpoon.setup()
+
+-- basic telescope configuration
+local conf = require("telescope.config").values
+local function toggle_telescope(harpoon_files)
+    local file_paths = {}
+    for _, item in ipairs(harpoon_files.items) do
+        table.insert(file_paths, item.value)
+    end
+
+    require("telescope.pickers").new({}, {
+        prompt_title = "Harpoon",
+        finder = require("telescope.finders").new_table({
+            results = file_paths,
+        }),
+        previewer = conf.file_previewer({}),
+        sorter = conf.generic_sorter({}),
+    }):find()
+end
+
+vim.keymap.set("n", "<leader>a", function() harpoon:list():add() end)
+vim.keymap.set("n", "<leader>d", function() harpoon:list():remove() end)
+
+vim.keymap.set("n", "<leader>h", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
+
+vim.keymap.set("n", "<A-h>", function() harpoon:list():prev() end)
+vim.keymap.set("n", "<A-l>", function() harpoon:list():next() end)
+vim.keymap.set("n", "<A-q>", function()
+  local bufname = vim.api.nvim_buf_get_name(0)
+  harpoon:list():remove(bufname)
+  vim.cmd("bd")
+end)
+-- map('n', '<A-h>', '<Cmd>bprevious<CR>', opts)
+-- map('n', '<A-l>', '<Cmd>bnext<CR>', opts)
+-- map('n', '<A-q>', '<Cmd>bdelete<CR>', opts)
 
 -- File tree (nvim-tree)
-vim.keymap.set('n', '<leader>ft', ':NvimTreeFindFile<CR>', { noremap = true, silent = true })
-vim.keymap.set('n', '<leader>fq', ':NvimTreeClose<CR>', { noremap = true, silent = true })
+vim.keymap.set('n', '<leader>ft', ':Oil<CR>', { noremap = true, silent = true })
+
+-- vim.keymap.set('n', '<leader>ft', ':NvimTreeFindFile<CR>', { noremap = true, silent = true })
+-- vim.keymap.set('n', '<leader>fq', ':NvimTreeClose<CR>', { noremap = true, silent = true })
 
 -- Themery (colorscheme preview)
 vim.keymap.set('n', '<leader>tt', ':Themery<CR>', { noremap = true, silent = true })
@@ -145,15 +203,60 @@ require('lspconfig')['elixirls'].setup {
 -- =========================
 
 -- nvim-tree
-require('nvim-tree').setup {
-  view = { adaptive_size = true }
-}
+-- require('nvim-tree').setup {
+--   view = { adaptive_size = true }
+-- }
+
+-- Declare a global function to retrieve the current directory
+function _G.get_oil_winbar()
+  local bufnr = vim.api.nvim_win_get_buf(vim.g.statusline_winid)
+  local dir = require("oil").get_current_dir(bufnr)
+  if dir then
+    return vim.fn.fnamemodify(dir, ":~")
+  else
+    -- If there is no current directory (e.g. over ssh), just show the buffer name
+    return vim.api.nvim_buf_get_name(0)
+  end
+end
+
+require('oil').setup({
+        default_file_explorer = true,
+        delete_to_trash = true,
+        skip_confirm_for_simple_edits = true,
+        view_options = {
+          show_hidden = true,
+          natural_order = true,
+          is_always_hidden = function(name, _)
+            return name == '..' or name == '.git'
+          end,
+        },
+        win_options = {
+          wrap = true,
+          winbar = "%!v:lua.get_oil_winbar()",
+        },
+  keymaps = {
+    ['Y'] = {
+        desc = 'Copy filepath to system clipboard',
+        callback = function ()
+      require('oil.actions').copy_entry_path.callback()
+      vim.fn.setreg("+", vim.fn.getreg(vim.v.register))
+      print("Copied to clipboard: " .. vim.fn.getreg(vim.v.register))
+        end,
+    },
+  }
+})
+
+-- harpoon
+-- harpoon = require('harpoon')
+-- harpoon.setup()
+-- vim.keymap.set("n", "<leader>a", function() harpoon:list():add() end)
+-- vim.keymap.set("n", "<C-e>", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end)
 
 -- lualine
 require('lualine').setup {
   options = {
     theme = 'auto'
-  }
+  },
 }
 
 -- Comment.nvim
@@ -170,7 +273,7 @@ require('Comment').setup {
 vim.opt.clipboard = 'unnamedplus'
 
 -- CopilotChat
-require("CopilotChat").setup {}
+-- require("CopilotChat").setup {}
 
 -- Themery (colorscheme preview)
 require("themery").setup({
@@ -193,6 +296,16 @@ require("themery").setup({
     {
       name = "Space vim dark",
       colorscheme = "space_vim_theme",
+      before = [[ vim.o.background = "dark" ]],
+    },
+    {
+      name = "Tokyonight dark",
+      colorscheme = "tokyonight-night",
+      before = [[ vim.o.background = "dark" ]],
+    },
+    {
+      name = "Github dark",
+      colorscheme = "github_dark",
       before = [[ vim.o.background = "dark" ]],
     },
     {
@@ -235,11 +348,41 @@ local telescope = require("telescope")
 telescope.setup({
   defaults = {
     mappings = {
-      i = { ["<c-t>"] = open_with_trouble },
-      n = { ["<c-t>"] = open_with_trouble },
+      i = { ["<M-t>"] = open_with_trouble },
+      n = { ["<M-t>"] = open_with_trouble },
     },
   },
 })
+
+-- Spectre
+vim.keymap.set('n', '<leader>sp', '<cmd>lua require("spectre").toggle()<CR>', {desc = "Toggle Spectre"})
+vim.keymap.set('n', '<leader>sf', '<cmd>lua require("spectre").open_file_search({select_word=true})<CR>', {desc = "Search on current file"})
+
+-- Indent lines
+local highlight = {
+    'RainbowRed',
+    'RainbowYellow',
+    'RainbowBlue',
+    'RainbowOrange',
+    'RainbowGreen',
+    'RainbowViolet',
+    'RainbowCyan',
+}
+
+local hooks = require 'ibl.hooks'
+-- create the highlight groups in the highlight setup hook, so they are reset
+-- every time the colorscheme changes
+hooks.register(hooks.type.HIGHLIGHT_SETUP, function()
+    vim.api.nvim_set_hl(0, 'RainbowRed', { fg = '#E06C75' })
+    vim.api.nvim_set_hl(0, 'RainbowYellow', { fg = '#E5C07B' })
+    vim.api.nvim_set_hl(0, 'RainbowBlue', { fg = '#61AFEF' })
+    vim.api.nvim_set_hl(0, 'RainbowOrange', { fg = '#D19A66' })
+    vim.api.nvim_set_hl(0, 'RainbowGreen', { fg = '#98C379' })
+    vim.api.nvim_set_hl(0, 'RainbowViolet', { fg = '#C678DD' })
+    vim.api.nvim_set_hl(0, 'RainbowCyan', { fg = '#56B6C2' })
+end)
+
+require('ibl').setup { indent = { highlight = highlight, char = '▏' } }
 
 -- =========================
 -- Diagnostics (optional)

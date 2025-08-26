@@ -22,16 +22,28 @@ return require('packer').startup(function(use)
     requires = { 'nvim-lua/plenary.nvim' }
   }
 
+  -- Files replacement
+  use 'nvim-pack/nvim-spectre'
+
   -- copilot
   use 'github/copilot.vim'
-  use 'CopilotC-Nvim/CopilotChat.nvim'
+  -- use 'CopilotC-Nvim/CopilotChat.nvim'
 
   -- Tabs
   use 'nvim-tree/nvim-web-devicons'
-  use 'romgrk/barbar.nvim'
+  -- use 'romgrk/barbar.nvim'
+  use {
+    'ThePrimeagen/harpoon',
+    branch = 'harpoon2',
+    requires = { 'nvim-lua/plenary.nvim' }
+  }	
 
   -- Filetree
-  use 'nvim-tree/nvim-tree.lua'
+  -- use 'nvim-tree/nvim-tree.lua'
+  use {
+    'stevearc/oil.nvim',
+    requires = { 'nvim-tree/nvim-web-devicons', 'echasnovski/mini.icons' }
+  }
 
   -- Statusline
   use {
@@ -54,4 +66,7 @@ return require('packer').startup(function(use)
 
   -- Errors
   use 'folke/trouble.nvim'
+
+  -- Indent lines
+  use 'lukas-reineke/indent-blankline.nvim'
 end)
