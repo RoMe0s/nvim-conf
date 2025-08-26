@@ -28,7 +28,7 @@ return require('packer').startup(function(use)
 
   -- 🤖 GitHub Copilot integration
   use 'github/copilot.vim'
-  -- use 'CopilotC-Nvim/CopilotChat.nvim'              -- Optional Copilot chat interface
+  use 'CopilotC-Nvim/CopilotChat.nvim'                 -- Optional Copilot chat interface
 
   -- 📁 Tabs and devicons
   use 'nvim-tree/nvim-web-devicons'                    -- Icons for UI elements

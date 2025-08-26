@@ -273,7 +273,7 @@ require('Comment').setup {
 vim.opt.clipboard = 'unnamedplus'
 
 -- CopilotChat
--- require("CopilotChat").setup {}
+require("CopilotChat").setup {}
 
 -- Themery (colorscheme preview)
 require("themery").setup({
