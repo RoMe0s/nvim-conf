@@ -1,72 +1,80 @@
 return require('packer').startup(function(use)
-  -- Packer can manage itself
+  -- 🧩 Packer can manage itself
   use 'wbthomason/packer.nvim'
 
-  -- Syntax highlight
+  -- 🌲 Syntax highlighting via Treesitter
   use {
     'nvim-treesitter/nvim-treesitter',
     run = ':TSUpdate'
   }
 
-  -- Autocomplete
-  use 'neovim/nvim-lspconfig' 
-  use 'nvim-treesitter/completion-treesitter' -- Only if you are using TS
-  use 'hrsh7th/nvim-cmp' -- Autocompletion plugin
-  use 'hrsh7th/cmp-nvim-lsp' -- LSP source for nvim-cmp
-  use 'saadparwaiz1/cmp_luasnip' -- Snippets source for nvim-cmp
-  use 'L3MON4D3/LuaSnip' -- Snippets plugin
+  -- ⚡ Autocompletion setup
+  use 'neovim/nvim-lspconfig'                          -- LSP configuration
+  use 'nvim-treesitter/completion-treesitter'          -- Treesitter-based completion (if using TS)
+  use 'hrsh7th/nvim-cmp'                               -- Core completion plugin
+  use 'hrsh7th/cmp-nvim-lsp'                           -- LSP source for nvim-cmp
+  use 'saadparwaiz1/cmp_luasnip'                       -- LuaSnip source for nvim-cmp
+  use 'L3MON4D3/LuaSnip'                               -- Snippet engine
 
-  -- Files search
+  -- 🔍 Fuzzy file search
   use {
-    'nvim-telescope/telescope.nvim', tag = '0.1.8',
+    'nvim-telescope/telescope.nvim',
+    tag = '0.1.8',
     requires = { 'nvim-lua/plenary.nvim' }
   }
 
-  -- Files replacement
+  -- 🔁 File content replacement
   use 'nvim-pack/nvim-spectre'
 
-  -- copilot
+  -- 🤖 GitHub Copilot integration
   use 'github/copilot.vim'
-  -- use 'CopilotC-Nvim/CopilotChat.nvim'
+  -- use 'CopilotC-Nvim/CopilotChat.nvim'              -- Optional Copilot chat interface
 
-  -- Tabs
-  use 'nvim-tree/nvim-web-devicons'
-  -- use 'romgrk/barbar.nvim'
+  -- 📁 Tabs and devicons
+  use 'nvim-tree/nvim-web-devicons'                    -- Icons for UI elements
+  -- use 'romgrk/barbar.nvim'                          -- Optional tabline plugin
+
   use {
     'ThePrimeagen/harpoon',
     branch = 'harpoon2',
     requires = { 'nvim-lua/plenary.nvim' }
-  }	
+  }
 
-  -- Filetree
-  -- use 'nvim-tree/nvim-tree.lua'
+  -- 🌳 File explorer
+  -- use 'nvim-tree/nvim-tree.lua'                     -- Optional tree-based file explorer
   use {
     'stevearc/oil.nvim',
-    requires = { 'nvim-tree/nvim-web-devicons', 'echasnovski/mini.icons' }
+    requires = {
+      'nvim-tree/nvim-web-devicons',
+      'echasnovski/mini.icons'
+    }
   }
 
-  -- Statusline
+  -- 📊 Statusline
   use {
     'nvim-lualine/lualine.nvim',
-    requires = { 'nvim-tree/nvim-web-devicons', opt = true }
+    requires = {
+      'nvim-tree/nvim-web-devicons',
+      opt = true
+    }
   }
 
-  -- Git blame
+  -- 🕵️ Git blame annotations
   use 'f-person/git-blame.nvim'
 
-  -- Commenting
+  -- 💬 Comment toggling
   use 'numToStr/Comment.nvim'
 
-  -- Theme
-  use 'zaldih/themery.nvim'
-  use 'liuchengxu/space-vim-theme'
-  use 'scottmckendry/cyberdream.nvim'
-  use 'folke/tokyonight.nvim'
-  use 'projekt0n/github-nvim-theme'
+  -- 🎨 Themes
+  use 'zaldih/themery.nvim'                            -- Theme switcher
+  use 'liuchengxu/space-vim-theme'                     -- SpaceVim-inspired theme
+  use 'scottmckendry/cyberdream.nvim'                  -- Cyberpunk-style theme
+  use 'folke/tokyonight.nvim'                          -- Popular Tokyo Night theme
+  use 'projekt0n/github-nvim-theme'                    -- GitHub-inspired theme
 
-  -- Errors
+  -- ❗ Diagnostics and error navigation
   use 'folke/trouble.nvim'
 
-  -- Indent lines
+  -- 📏 Indentation guides
   use 'lukas-reineke/indent-blankline.nvim'
 end)
