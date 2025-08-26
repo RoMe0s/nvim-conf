@@ -5,11 +5,14 @@
 -- <leader>f       : telescope find files
 -- <leader>g       : telescope live grep
 -- <leader>b       : telescope buffers
+-- <leader>j       : telescope jumplist
+-- <leader>r       : telescope registers
 -- <a-t>           : telescope open with trouble
+-- <a-b>           : jump back in jumplist
+-- <a-n>           : jump forward in jumplist
 -- =========================
 -- <leader>h       : harpoon quick menu
 -- <a-a>           : harpoon add file
--- <a-d>           : harpoon remove file
 -- <a-1>           : harpoon select file 1
 -- <a-2>           : harpoon select file 2
 -- <a-3>           : harpoon select file 3
@@ -31,9 +34,9 @@
 -- <a-a> (insert)  : copilot accept
 -- <c-d>           : copilot disable
 -- <c-e>           : copilot enable
--- <c-o>           : copilotchat toggle
+-- <a-o>           : copilotchat toggle
 -- =========================
--- <leader>s       : spectre search in file
+-- <leader>S       : spectre search in file
 -- =========================
 -- <c-c>           : comment.nvim toggle line (normal)
 -- <c-C>           : comment.nvim toggle line (visual)
@@ -45,82 +48,101 @@
 -- <cr>            : nvim-cmp confirm completion
 
 -- =========================
--- 📝 lua indent settings
+-- ⚙️ General Settings
 -- =========================
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+vim.opt.relativenumber = true
+vim.opt.clipboard = 'unnamedplus'
+
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'lua',
   callback = function()
     vim.opt_local.shiftwidth = 2
     vim.opt_local.tabstop = 2
     vim.opt_local.expandtab = true
-    vim.b.disable_indentexpr = true  -- disables tree-sitter indent
+    vim.b.disable_indentexpr = true
   end
 })
 
--- 📏 relative line numbers
-vim.opt.relativenumber = true
+-- Clear jumplist on startup
+vim.api.nvim_create_autocmd('VimEnter', {
+  callback = function()
+    vim.cmd('clearjumps')
+  end
+})
 
--- =========================
--- ⚙️ basic settings & plugins
--- =========================
--- disable netrw at the very start
-vim.g.loaded_netrw = 1
-vim.g.loaded_netrwPlugin = 1
-
+-- Load plugins
 require('plugins')
 
 -- =========================
--- 🎹 keybindings
+-- 🎹 Keybindings
 -- =========================
-
--- set <space> as leader
+-- Leader key
 vim.keymap.set('n', ' ', '<Nop>', { silent = true, noremap = true })
 vim.g.mapleader = ' '
 
--- =========================
--- 🦾 LSP config (lspconfig, cmp_nvim_lsp)
--- =========================
-local on_attach = function(_, bufnr)
-  vim.keymap.set('n', '<leader>gd', vim.lsp.buf.definition, { noremap = true, silent = true, buffer = bufnr, desc = 'LSP: go to definition' })
-end
-
-local capabilities = require('cmp_nvim_lsp').default_capabilities()
-
-require('lspconfig')['elixirls'].setup {
-  cmd = { '/home/romeos/elixir/elixir-ls/release/language_server.sh' },
-  capabilities = capabilities,
-  on_attach = on_attach
-}
+-- Jumplist navigation
+vim.keymap.set('n', '<A-b>', '<C-o>', { desc = 'Jump back in jumplist' })
+vim.keymap.set('n', '<A-n>', '<C-i>', { desc = 'Jump forward in jumplist' })
 
 -- =========================
--- 🔭 telescope 🔭
+-- 🔍 Telescope
 -- =========================
+local actions = require('telescope.actions')
+local action_state = require('telescope.actions.state')
 local builtin = require('telescope.builtin')
+local open_with_trouble = require('trouble.sources.telescope').open
+
+-- Keybindings
 vim.keymap.set('n', '<leader>f', builtin.find_files, { desc = 'Telescope: find files', noremap = true, silent = true })
 vim.keymap.set('n', '<leader>g', builtin.live_grep, { desc = 'Telescope: live grep', noremap = true, silent = true })
 vim.keymap.set('n', '<leader>b', builtin.buffers, { desc = 'Telescope: buffers', noremap = true, silent = true })
+vim.keymap.set('n', '<leader>j', builtin.jumplist, { desc = 'Telescope: jumplist', noremap = true, silent = true })
+vim.keymap.set('n', '<leader>r', builtin.registers, { desc = 'Telescope: registers', noremap = true, silent = true })
 
--- telescope + trouble integration
-local open_with_trouble = require('trouble.sources.telescope').open
+-- Configuration
 local telescope = require('telescope')
 telescope.setup({
+  pickers = {
+    buffers = {
+      initial_mode = 'normal'
+    },
+    jumplist = {
+      initial_mode = 'normal'
+    },
+    registers = {
+      initial_mode = 'normal'
+    }
+  },
   defaults = {
     mappings = {
       i = { ['<A-t>'] = open_with_trouble },
-      n = { ['<A-t>'] = open_with_trouble }
+      n = {
+        ['<A-t>'] = open_with_trouble,
+        ['dd'] = function(prompt_bufnr)
+          local entry = action_state.get_selected_entry()
+          local bufnr = entry.bufnr
+          local filename = vim.api.nvim_buf_get_name(bufnr)
+          
+          actions.close(prompt_bufnr)
+          vim.api.nvim_buf_delete(bufnr, { force = true })
+          require('harpoon'):list():remove(filename)
+        end
+      }
     }
   }
 })
 
 -- =========================
--- ⚓ harpoon ⚓
+-- 🔖 Harpoon
 -- =========================
 local harpoon = require('harpoon')
 harpoon.setup()
 
+-- Keybindings
 vim.keymap.set('n', '<leader>h', function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, { desc = 'Harpoon: quick menu', noremap = true, silent = true })
 vim.keymap.set('n', '<A-a>', function() harpoon:list():add() end, { desc = 'Harpoon: add file', noremap = true, silent = true })
-vim.keymap.set('n', '<A-d>', function() harpoon:list():remove() end, { desc = 'Harpoon: remove file', noremap = true, silent = true })
 vim.keymap.set('n', '<A-1>', function() harpoon:list():select(1) end)
 vim.keymap.set('n', '<A-2>', function() harpoon:list():select(2) end)
 vim.keymap.set('n', '<A-3>', function() harpoon:list():select(3) end)
@@ -135,10 +157,12 @@ vim.keymap.set('n', '<A-q>', function()
 end, { desc = 'Harpoon: remove current & close buffer', noremap = true, silent = true })
 
 -- =========================
--- 🗂️ oil (file explorer) 🗂️
+-- 🛢️ Oil
 -- =========================
+-- Keybindings
 vim.keymap.set('n', '<leader>o', ':Oil<CR>', { desc = 'Oil: file tree', noremap = true, silent = true })
 
+-- Configuration
 function _G.get_oil_winbar()
   local bufnr = vim.api.nvim_win_get_buf(vim.g.statusline_winid)
   local dir = require('oil').get_current_dir(bufnr)
@@ -167,7 +191,7 @@ require('oil').setup({
   keymaps = {
     ['y'] = {
       desc = 'copy filepath to system clipboard',
-      callback = function ()
+      callback = function()
         require('oil.actions').copy_entry_path.callback()
         vim.fn.setreg('+', vim.fn.getreg(vim.v.register))
         print('copied to clipboard: ' .. vim.fn.getreg(vim.v.register))
@@ -177,10 +201,12 @@ require('oil').setup({
 })
 
 -- =========================
--- 🎨 themery 🎨
+-- 🎨 Themery
 -- =========================
+-- Keybindings
 vim.keymap.set('n', '<leader>t', ':Themery<CR>', { desc = 'Themery: colorscheme picker', noremap = true, silent = true })
 
+-- Configuration
 require('themery').setup({
   themes = {
     { name = 'space vim light', colorscheme = 'space_vim_theme', before = [[ vim.o.background = 'light' ]] },
@@ -199,43 +225,54 @@ require('themery').setup({
 })
 
 -- =========================
--- 🐛 trouble 🐛
+-- ⚠️ Trouble
 -- =========================
--- vim.keymap.set('n', '<leader>de', function() vim.diagnostic.open_float(0, {scope='line'}) end, { desc = 'Diagnostics: show float', noremap = true, silent = true })
+-- Keybindings
 vim.keymap.set('n', '<leader>d', '<cmd>Trouble diagnostics toggle focus=false filter.buf=0<CR>', { desc = 'Trouble: diagnostics (buffer)', noremap = true, silent = true })
 vim.keymap.set('n', '<leader>s', '<cmd>Trouble symbols toggle focus=true<CR>', { desc = 'Trouble: symbols', noremap = true, silent = true })
 
-require('trouble').setup {}
+-- Configuration
+require('trouble').setup { focus = true }
 
 -- =========================
--- 🤖 copilot & copilotchat 🤖
+-- 🤖 Copilot & CopilotChat
 -- =========================
+-- Keybindings
 vim.keymap.set('i', '<A-d>', '<Plug>(copilot-dismiss)', { desc = 'Copilot: dismiss' })
-vim.keymap.set('i', '<A-a>', 'copilot#accept("\\<CR>")', { expr = true, replace_keycodes = false, desc = 'Copilot: accept' })
-vim.g.copilot_no_tab_map = true
+vim.keymap.set('i', '<A-a>', 'copilot#Accept("\\<CR>")', { expr = true, replace_keycodes = false, desc = 'Copilot: accept' })
 vim.keymap.set('n', '<C-d>', ':Copilot disable<CR>', { desc = 'Copilot: disable', noremap = true, silent = true })
 vim.keymap.set('n', '<C-e>', ':Copilot enable<CR>', { desc = 'Copilot: enable', noremap = true, silent = true })
-vim.keymap.set('n', '<C-o>', ':CopilotChatToggle<CR>', { desc = 'CopilotChat: toggle', noremap = true, silent = true })
+vim.keymap.set('n', '<A-o>', ':CopilotChatToggle<CR>', { desc = 'CopilotChat: toggle', noremap = true, silent = true })
+vim.g.copilot_no_tab_map = true
 
+-- Configuration
 require('CopilotChat').setup {}
 
 -- =========================
--- 🔥 spectre 🔥
+-- 🔍 Spectre
 -- =========================
--- vim.keymap.set('n', '<leader>sp', '<cmd>lua require("spectre").toggle()<CR>', { desc = 'Spectre: toggle', noremap = true, silent = true })
-vim.keymap.set('n', '<leader>s', '<cmd>lua require("spectre").open_file_search({select_word=true})<CR>', { desc = 'Spectre: search in file', noremap = true, silent = true })
+-- Keybindings
+vim.keymap.set('n', '<leader>S', '<cmd>lua require("spectre").open_file_search({select_word=true})<CR>', { desc = 'Spectre: search in file', noremap = true, silent = true })
 
 -- =========================
--- 🌳 treesitter 🌳
+-- 💬 Comment.nvim
+-- =========================
+-- Keybindings
+vim.keymap.set('n', '<C-c>', function() require('Comment.api').toggle.linewise.current() end, { desc = 'Comment: toggle line', noremap = true, silent = true })
+vim.keymap.set('x', '<C-C>', function() require('Comment.api').toggle.linewise(vim.fn.visualmode()) end, { desc = 'Comment: toggle line (visual)', noremap = true, silent = true })
+
+-- Configuration
+require('Comment').setup {}
+
+-- =========================
+-- 🌲 Treesitter
 -- =========================
 require('nvim-treesitter.configs').setup {
   ensure_installed = { 'c', 'lua', 'vim', 'vimdoc', 'query', 'elixir', 'heex' },
   sync_install = false,
   auto_install = true,
-  ignore_install = {},
   highlight = {
     enable = true,
-    disable = {},
     disable = function(lang, buf)
       local max_filesize = 100 * 1024 -- 100 KB
       local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
@@ -251,21 +288,17 @@ require('nvim-treesitter.configs').setup {
 }
 
 -- =========================
--- 🧠 nvim-cmp & luasnip 🧠
+-- 🔤 Completion (nvim-cmp)
 -- =========================
 local cmp = require('cmp')
 local luasnip = require('luasnip')
-
 cmp.setup {
   snippet = {
     expand = function(args)
       luasnip.lsp_expand(args.body)
     end
   },
-  window = {
-    -- completion = cmp.config.window.bordered(),
-    -- documentation = cmp.config.window.bordered()
-  },
+  window = {},
   mapping = cmp.mapping.preset.insert({
     ['<Tab>'] = cmp.mapping(function(fallback)
       if cmp.visible() then
@@ -296,7 +329,20 @@ cmp.setup {
 }
 
 -- =========================
--- 📊 lualine 📊
+-- 🔌 LSP Configuration
+-- =========================
+local on_attach = function(_, bufnr)
+  vim.keymap.set('n', '<leader>gd', vim.lsp.buf.definition, { noremap = true, silent = true, buffer = bufnr, desc = 'LSP: go to definition' })
+end
+local capabilities = require('cmp_nvim_lsp').default_capabilities()
+require('lspconfig')['elixirls'].setup {
+  cmd = { '/home/romeos/elixir/elixir-ls/release/language_server.sh' },
+  capabilities = capabilities,
+  on_attach = on_attach
+}
+
+-- =========================
+-- 📊 Status Line
 -- =========================
 require('lualine').setup {
   options = {
@@ -305,50 +351,32 @@ require('lualine').setup {
 }
 
 -- =========================
--- 💬 comment.nvim 💬
--- =========================
-require('Comment').setup {
-  toggler = {
-    line = '<C-c>'
-  },
-  opleader = {
-    line = '<C-C>'
-  }
-}
-
--- 📋 use system clipboard
-vim.opt.clipboard = 'unnamedplus'
-
--- =========================
--- 🪄 ibl (indent lines) 🪄
+-- 📏 Indent Guides
 -- =========================
 local highlight = {
-    'RainbowRed',
-    'RainbowYellow',
-    'RainbowBlue',
-    'RainbowOrange',
-    'RainbowGreen',
-    'RainbowViolet',
-    'RainbowCyan'
+  'RainbowRed',
+  'RainbowYellow',
+  'RainbowBlue',
+  'RainbowOrange',
+  'RainbowGreen',
+  'RainbowViolet',
+  'RainbowCyan'
 }
-
-local hooks = require 'ibl.hooks'
+local hooks = require('ibl.hooks')
 hooks.register(hooks.type.HIGHLIGHT_SETUP, function()
-    vim.api.nvim_set_hl(0, 'RainbowRed', { fg = '#E06C75' })
-    vim.api.nvim_set_hl(0, 'RainbowYellow', { fg = '#E5C07B' })
-    vim.api.nvim_set_hl(0, 'RainbowBlue', { fg = '#61AFEF' })
-    vim.api.nvim_set_hl(0, 'RainbowOrange', { fg = '#D19A66' })
-    vim.api.nvim_set_hl(0, 'RainbowGreen', { fg = '#98C379' })
-    vim.api.nvim_set_hl(0, 'RainbowViolet', { fg = '#C678DD' })
-    vim.api.nvim_set_hl(0, 'RainbowCyan', { fg = '#56B6C2' })
+  vim.api.nvim_set_hl(0, 'RainbowRed', { fg = '#E06C75' })
+  vim.api.nvim_set_hl(0, 'RainbowYellow', { fg = '#E5C07B' })
+  vim.api.nvim_set_hl(0, 'RainbowBlue', { fg = '#61AFEF' })
+  vim.api.nvim_set_hl(0, 'RainbowOrange', { fg = '#D19A66' })
+  vim.api.nvim_set_hl(0, 'RainbowGreen', { fg = '#98C379' })
+  vim.api.nvim_set_hl(0, 'RainbowViolet', { fg = '#C678DD' })
+  vim.api.nvim_set_hl(0, 'RainbowCyan', { fg = '#56B6C2' })
 end)
-
 require('ibl').setup { indent = { highlight = highlight, char = '▏' } }
 
 -- =========================
--- 🚨 diagnostics (optional) 🚨
+-- 🚨 Diagnostics (optional)
 -- =========================
--- uncomment to enable inline diagnostics
 -- vim.diagnostic.config({
 --   virtual_text = {
 --     source = 'if_many',
