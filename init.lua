@@ -2,16 +2,17 @@
 -- 🌟 keybindings summary 🌟
 -- =========================
 -- <space>         : leader key
--- <leader>f       : telescope find files
--- <leader>g       : telescope live grep
--- <leader>b       : telescope buffers
--- <leader>j       : telescope jumplist
--- <leader>r       : telescope registers
+-- <leader>ff      : telescope find files
+-- <leader>fg      : telescope live grep
+-- <leader>fb      : telescope buffers
+-- <leader>fj      : telescope jumplist
+-- <leader>fr      : telescope registers
 -- <a-t>           : telescope open with trouble
 -- <a-b>           : jump back in jumplist
 -- <a-n>           : jump forward in jumplist
 -- =========================
--- <leader>h       : harpoon quick menu
+-- <leader>hh      : harpoon quick menu
+-- <leader>hc      : clear harpoon list
 -- <a-a>           : harpoon add file
 -- <a-1>           : harpoon select file 1
 -- <a-2>           : harpoon select file 2
@@ -22,10 +23,11 @@
 -- <a-l>           : harpoon next file
 -- <a-q>           : harpoon remove current & close buffer
 -- =========================
--- <leader>o       : oil file tree
--- y (in oil)      : copy filepath to system clipboard
+-- <leader>ft      : oil file tree
+-- y (in oil)      : copy relpath to system clipboard
+-- Y (in oil)      : copy fullpath to system clipboard
 -- =========================
--- <leader>t       : themery colorscheme picker
+-- <leader>tt      : themery colorscheme picker
 -- =========================
 -- <leader>d       : trouble diagnostics (buffer)
 -- <leader>s       : trouble symbols
@@ -37,9 +39,6 @@
 -- <a-o>           : copilotchat toggle
 -- =========================
 -- <leader>S       : spectre search in file
--- =========================
--- <c-c>           : comment.nvim toggle line (normal)
--- <c-C>           : comment.nvim toggle line (visual)
 -- =========================
 -- <tab>           : nvim-cmp next completion/snippet
 -- <s-tab>         : nvim-cmp previous completion/snippet
@@ -95,24 +94,27 @@ local builtin = require('telescope.builtin')
 local open_with_trouble = require('trouble.sources.telescope').open
 
 -- Keybindings
-vim.keymap.set('n', '<leader>f', builtin.find_files, { desc = 'Telescope: find files', noremap = true, silent = true })
-vim.keymap.set('n', '<leader>g', builtin.live_grep, { desc = 'Telescope: live grep', noremap = true, silent = true })
-vim.keymap.set('n', '<leader>b', builtin.buffers, { desc = 'Telescope: buffers', noremap = true, silent = true })
-vim.keymap.set('n', '<leader>j', builtin.jumplist, { desc = 'Telescope: jumplist', noremap = true, silent = true })
-vim.keymap.set('n', '<leader>r', builtin.registers, { desc = 'Telescope: registers', noremap = true, silent = true })
+vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Telescope: find files', noremap = true, silent = true })
+vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope: live grep', noremap = true, silent = true })
+vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Telescope: buffers', noremap = true, silent = true })
+vim.keymap.set('n', '<leader>fj', builtin.jumplist, { desc = 'Telescope: jumplist', noremap = true, silent = true })
+vim.keymap.set('n', '<leader>fr', builtin.registers, { desc = 'Telescope: registers', noremap = true, silent = true })
 
 -- Configuration
 local telescope = require('telescope')
 telescope.setup({
   pickers = {
     buffers = {
-      initial_mode = 'normal'
+      initial_mode = 'normal',
+      previewer = false
     },
     jumplist = {
-      initial_mode = 'normal'
+      initial_mode = 'normal',
+      previewer = false
     },
     registers = {
-      initial_mode = 'normal'
+      initial_mode = 'normal',
+      previewer = false
     }
   },
   defaults = {
@@ -141,7 +143,13 @@ local harpoon = require('harpoon')
 harpoon.setup()
 
 -- Keybindings
-vim.keymap.set('n', '<leader>h', function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, { desc = 'Harpoon: quick menu', noremap = true, silent = true })
+vim.keymap.set('n', '<leader>hh', function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, { desc = 'Harpoon: quick menu', noremap = true, silent = true })
+
+vim.keymap.set('n', '<leader>hc', function()
+  harpoon:list():clear()
+  harpoon.ui:toggle_quick_menu()
+end, { desc = 'Harpoon: quick menu', noremap = true, silent = true })
+
 vim.keymap.set('n', '<A-a>', function() harpoon:list():add() end, { desc = 'Harpoon: add file', noremap = true, silent = true })
 vim.keymap.set('n', '<A-1>', function() harpoon:list():select(1) end)
 vim.keymap.set('n', '<A-2>', function() harpoon:list():select(2) end)
@@ -151,8 +159,22 @@ vim.keymap.set('n', '<A-5>', function() harpoon:list():select(5) end)
 vim.keymap.set('n', '<A-h>', function() harpoon:list():prev() end, { desc = 'Harpoon: previous file', noremap = true, silent = true })
 vim.keymap.set('n', '<A-l>', function() harpoon:list():next() end, { desc = 'Harpoon: next file', noremap = true, silent = true })
 vim.keymap.set('n', '<A-q>', function()
-  local bufname = vim.api.nvim_buf_get_name(0)
-  harpoon:list():remove(bufname)
+  local Path = require('plenary.path')
+  local bufname = Path:new(vim.api.nvim_buf_get_name(0)):absolute()
+  local list = harpoon:list()
+  local idx_to_remove = nil
+
+  for i, item in ipairs(list.items) do
+    if Path:new(item.value):absolute() == bufname then
+      idx_to_remove = i
+      break
+    end
+  end
+
+  -- if idx_to_remove then
+  list:remove_at(idx_to_remove)
+  -- end
+
   vim.cmd('bd')
 end, { desc = 'Harpoon: remove current & close buffer', noremap = true, silent = true })
 
@@ -160,12 +182,14 @@ end, { desc = 'Harpoon: remove current & close buffer', noremap = true, silent =
 -- 🛢️ Oil
 -- =========================
 -- Keybindings
-vim.keymap.set('n', '<leader>o', ':Oil<CR>', { desc = 'Oil: file tree', noremap = true, silent = true })
+vim.keymap.set('n', '<leader>ft', ':Oil<CR>', { desc = 'Oil: file tree', noremap = true, silent = true })
 
 -- Configuration
+local oil = require('oil')
+
 function _G.get_oil_winbar()
   local bufnr = vim.api.nvim_win_get_buf(vim.g.statusline_winid)
-  local dir = require('oil').get_current_dir(bufnr)
+  local dir = oil.get_current_dir(bufnr)
   if dir then
     return vim.fn.fnamemodify(dir, ':~')
   else
@@ -173,7 +197,7 @@ function _G.get_oil_winbar()
   end
 end
 
-require('oil').setup({
+oil.setup({
   default_file_explorer = true,
   delete_to_trash = true,
   skip_confirm_for_simple_edits = true,
@@ -190,7 +214,23 @@ require('oil').setup({
   },
   keymaps = {
     ['y'] = {
-      desc = 'copy filepath to system clipboard',
+      desc = 'copy relative path to system clipboard',
+      callback = function()
+        local entry = oil.get_cursor_entry()
+        local dir = oil.get_current_dir()
+
+        if not entry or not dir then
+          return
+        end
+
+        local relpath = vim.fn.fnamemodify(dir, ':.') .. entry.name
+
+        vim.fn.setreg('+', relpath)
+        print('copied to clipboard: ' .. relpath)
+      end
+    },
+    ['Y'] = {
+      desc = 'copy full path to system clipboard',
       callback = function()
         require('oil.actions').copy_entry_path.callback()
         vim.fn.setreg('+', vim.fn.getreg(vim.v.register))
@@ -204,7 +244,7 @@ require('oil').setup({
 -- 🎨 Themery
 -- =========================
 -- Keybindings
-vim.keymap.set('n', '<leader>t', ':Themery<CR>', { desc = 'Themery: colorscheme picker', noremap = true, silent = true })
+vim.keymap.set('n', '<leader>tt', ':Themery<CR>', { desc = 'Themery: colorscheme picker', noremap = true, silent = true })
 
 -- Configuration
 require('themery').setup({
@@ -257,11 +297,6 @@ vim.keymap.set('n', '<leader>S', '<cmd>lua require("spectre").open_file_search({
 -- =========================
 -- 💬 Comment.nvim
 -- =========================
--- Keybindings
-vim.keymap.set('n', '<C-c>', function() require('Comment.api').toggle.linewise.current() end, { desc = 'Comment: toggle line', noremap = true, silent = true })
-vim.keymap.set('x', '<C-C>', function() require('Comment.api').toggle.linewise(vim.fn.visualmode()) end, { desc = 'Comment: toggle line (visual)', noremap = true, silent = true })
-
--- Configuration
 require('Comment').setup {}
 
 -- =========================
@@ -353,26 +388,26 @@ require('lualine').setup {
 -- =========================
 -- 📏 Indent Guides
 -- =========================
-local highlight = {
-  'RainbowRed',
-  'RainbowYellow',
-  'RainbowBlue',
-  'RainbowOrange',
-  'RainbowGreen',
-  'RainbowViolet',
-  'RainbowCyan'
-}
-local hooks = require('ibl.hooks')
-hooks.register(hooks.type.HIGHLIGHT_SETUP, function()
-  vim.api.nvim_set_hl(0, 'RainbowRed', { fg = '#E06C75' })
-  vim.api.nvim_set_hl(0, 'RainbowYellow', { fg = '#E5C07B' })
-  vim.api.nvim_set_hl(0, 'RainbowBlue', { fg = '#61AFEF' })
-  vim.api.nvim_set_hl(0, 'RainbowOrange', { fg = '#D19A66' })
-  vim.api.nvim_set_hl(0, 'RainbowGreen', { fg = '#98C379' })
-  vim.api.nvim_set_hl(0, 'RainbowViolet', { fg = '#C678DD' })
-  vim.api.nvim_set_hl(0, 'RainbowCyan', { fg = '#56B6C2' })
-end)
-require('ibl').setup { indent = { highlight = highlight, char = '▏' } }
+-- require('ibl').setup { indent = { highlight = highlight, char = '▏' } }
+--   'RainbowRed',
+--   'RainbowYellow',
+--   'RainbowBlue',
+--   'RainbowOrange',
+--   'RainbowGreen',
+--   'RainbowViolet',
+--   'RainbowCyan'
+-- }
+-- local hooks = require('ibl.hooks')
+-- hooks.register(hooks.type.HIGHLIGHT_SETUP, function()
+--   vim.api.nvim_set_hl(0, 'RainbowRed', { fg = '#E06C75' })
+--   vim.api.nvim_set_hl(0, 'RainbowYellow', { fg = '#E5C07B' })
+--   vim.api.nvim_set_hl(0, 'RainbowBlue', { fg = '#61AFEF' })
+--   vim.api.nvim_set_hl(0, 'RainbowOrange', { fg = '#D19A66' })
+--   vim.api.nvim_set_hl(0, 'RainbowGreen', { fg = '#98C379' })
+--   vim.api.nvim_set_hl(0, 'RainbowViolet', { fg = '#C678DD' })
+--   vim.api.nvim_set_hl(0, 'RainbowCyan', { fg = '#56B6C2' })
+-- end)
+-- require('ibl').setup { indent = { highlight = highlight, char = '▏' } }
 
 -- =========================
 -- 🚨 Diagnostics (optional)

@@ -76,5 +76,5 @@ return require('packer').startup(function(use)
   use 'folke/trouble.nvim'
 
   -- 📏 Indentation guides
-  use 'lukas-reineke/indent-blankline.nvim'
+  -- use 'lukas-reineke/indent-blankline.nvim'
 end)
